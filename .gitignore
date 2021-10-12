@@ -1,1 +1,6 @@
+# Build
 build/
+out/
+
+# Visual Studio stuff
+.vs/

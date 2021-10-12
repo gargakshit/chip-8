@@ -5,7 +5,7 @@ cmake_minimum_required(VERSION 3.5.1)
 project(chip-8)
 
 # Creates the variable EXEC and sets it to hello
-set(EXEC hello)
+set(EXEC chip8)
 
 # set the C++14 standard
 set(CMAKE_CXX_STANDARD 17)
