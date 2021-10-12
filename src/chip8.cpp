@@ -1,7 +1,6 @@
 #include <cstdint>
 #include <fstream>
 #include <iostream>
-#include <stdint.h>
 #include <string>
 
 #include "chip8.hpp"

@@ -5,8 +5,11 @@
 
 #include "chip8.hpp"
 
+#define CLOCK_SPEED 700.0f
+
 class Display : public olc::PixelGameEngine {
   chip8::Chip8 *interp;
+  float fAccumulatedTime = 0;
 
 public:
   Display(chip8::Chip8 *i) {
@@ -17,7 +20,14 @@ public:
   bool OnUserCreate() override { return true; }
 
   bool OnUserUpdate(float fElapsedTime) override {
-    interp->Tick();
+    fAccumulatedTime += fElapsedTime;
+    // Tick the CPU clock roughly at ~700Hz. This is not accurate by any means,
+    // but works fine when the yielded framerate is more than 700. Due to how
+    // this works, this requires VSync to be disabled.
+    if (fAccumulatedTime >= 1.0f / CLOCK_SPEED) {
+      interp->Tick();
+      fAccumulatedTime -= (1.0f / CLOCK_SPEED);
+    }
 
     for (int y = 0; y < ScreenHeight(); y++) {
       for (int x = 0; x < ScreenWidth(); x++) {
@@ -49,7 +59,7 @@ int main(int args, char **argv) {
     return 1;
   }
 
-  if (application.Construct(64, 32, 16, 16, false, true)) {
+  if (application.Construct(64, 32, 16, 16)) {
     application.Start();
   }
 
