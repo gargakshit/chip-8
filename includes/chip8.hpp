@@ -25,23 +25,23 @@ class Chip8 {
 
   std::array<uint8_t, 4096> mem; // 4kb memory
 
-  uint16_t pc;     // Program Counter
-  uint16_t index;  // Index register
-  uint16_t opcode; // Current opcode
-
   std::array<uint16_t, 16> stack; // Stack with size of 16
   uint8_t sp;                     // Stack pointer
 
   uint8_t delayTimer; // 8 bit delay timer
   uint8_t soundTimer; // 8 bit sound timer
 
-  std::array<uint8_t, 16> reg; // 16 registers (v0 to vF)
-
   std::array<bool, 16> keypadState; // State of the keypad (0 to F)
 
 public:
   std::array<bool, 64 * 32> display; // State of the 64x32 monochrome display
-  bool abort = false;
+  bool redraw = false; // Only redraw when requested. The display module must
+                       // set it to false after drawing.
+
+  std::array<uint8_t, 16> reg; // 16 registers (v0 to vF)
+  uint16_t pc;                 // Program Counter
+  uint16_t index;              // Index register
+  uint16_t opcode;             // Current opcode
 
   void Reset();
   bool LoadProgram(std::string filename);

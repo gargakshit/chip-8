@@ -1,2 +1,4 @@
 -I./submodules/olcPixelGameEngine
 -I./includes
+-std=c++17
+-D_DEBUG
