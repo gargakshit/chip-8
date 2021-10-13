@@ -43,7 +43,9 @@ You will need `cmake`, `llvm`, `make` and `git`.
   binary will be produced with `build/chip8.exe` as the path. At this point,
   you could run your favorite `Chip-8` "ROMs" by dragging them and dropping it
   onto the binary in the file explorer, or by using a terminal and running
-  ```$ build/chip8 path/to/my/program.ch8```
+  ```$ build/chip8 path/to/my/program.ch8```. I have included some programs
+  in the `programs/` directory to play with (shout out to the original program
+  authors)
 
 You can also build with VS and MSVC toolchains, but I have not tested them
 personally
