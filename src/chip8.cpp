@@ -315,6 +315,143 @@ void Chip8::Tick() {
     break;
   }
 
+  case 0xE000: {
+    switch (opcode & 0x00FF) {
+    // EX9E (Skip an instruction if key stored in vX is true)
+    case 0x009E: {
+      if (keypadState[reg[(opcode & 0x0F00) >> 8]]) {
+        pc += 2;
+      }
+
+      pc += 2;
+      break;
+    }
+
+    // EXA1 (Skip an instruction if key stored in vX is false)
+    case 0x00A1: {
+      if (!keypadState[reg[(opcode & 0x0F00) >> 8]]) {
+        pc += 2;
+      }
+
+      pc += 2;
+      break;
+    }
+
+    default: {
+      invalid = true;
+      break;
+    }
+    }
+
+    break;
+  }
+
+  case 0xF000: {
+    switch (opcode & 0x00FF) {
+    // FX07 (Assign vX = delayTimer)
+    case 0x0007: {
+      reg[(opcode & 0x0F00) >> 8] = delayTimer;
+      pc += 2;
+      break;
+    }
+
+    // FX0A (Wait for keypress and then set the key to vX)
+    case 0x000A: {
+      bool pressed = false;
+
+      // Iterate through all keys to check if any of them is pressed
+      for (int i = 0; i < 16; i++) {
+        if (keypadState[i]) {
+          pressed = true;
+          reg[(opcode & 0x0F00) >> 8] = i;
+        }
+      }
+
+      // If not pressed, return without changing the PC. This will case this
+      // instruction to be executed again on the next clock tick
+      if (!pressed) {
+        return;
+      }
+
+      pc += 2;
+      break;
+    }
+
+    // FX15 (Assign delayTimer = vX)
+    case 0x0015: {
+      delayTimer = reg[(opcode & 0x0F00) >> 8];
+      pc += 2;
+      break;
+    }
+
+    // FX18 (Assign soundTimer = vX)
+    case 0x0018: {
+      soundTimer = reg[(opcode & 0x0F00) >> 8];
+      pc += 2;
+      break;
+    }
+
+    // FX1E (Set index += vX with carry)
+    case 0x001E: {
+      if (index + reg[(opcode & 0x0F00) >> 8] > 0xFFF) {
+        reg[0xF] = 1;
+      } else {
+        reg[0xF] = 0;
+      }
+
+      index += reg[(opcode & 0x0F00) >> 8];
+      pc += 2;
+      break;
+    }
+
+    // FX29 (Set index = spriteLocation[vX])
+    case 0x0029: {
+      // Sprites are stored from 0x0000 to 0x0200. Each sprite is of 5 bytes
+      index = reg[(opcode & 0x0F00) >> 8] * 0x5;
+
+      pc += 2;
+      break;
+    }
+
+    // FX33 (Set index, index + 1, index + 2 = BCD(vX))
+    case 0x0033: {
+      mem[index] = reg[(opcode & 0x0F00) >> 8] / 100;
+      mem[index + 1] = (reg[(opcode & 0x0F00) >> 8] / 10) % 10;
+      mem[index + 2] = (reg[(opcode & 0x0F00) >> 8] % 100) % 10;
+
+      pc += 2;
+      break;
+    }
+
+    // FX55 (Set index, index + 1, index + 2, ... = v0, v1, v2, ..., vX)
+    case 0x0055: {
+      for (int i = 0; i < ((opcode & 0x0F00) >> 8); i++) {
+        mem[index + i] = reg[i];
+      }
+
+      pc += 2;
+      break;
+    }
+
+    // FX65 (Set v0, v1, ..., vX = index, index + 1, ...)
+    case 0x0065: {
+      for (int i = 0; i < ((opcode & 0x0F00) >> 8); i++) {
+        reg[i] = mem[index + i];
+      }
+
+      pc += 2;
+      break;
+    }
+
+    default: {
+      invalid = true;
+      break;
+    }
+    }
+
+    break;
+  }
+
   default:
     invalid = true;
     break;
