@@ -31,8 +31,6 @@ class Chip8 {
   uint8_t delayTimer; // 8 bit delay timer
   uint8_t soundTimer; // 8 bit sound timer
 
-  std::array<bool, 16> keypadState; // State of the keypad (0 to F)
-
   void stackPush(uint16_t data);
   uint16_t stackPop();
 
@@ -40,6 +38,8 @@ public:
   std::array<bool, 64 * 32> display; // State of the 64x32 monochrome display
   bool redraw = false; // Only redraw when requested. The display module must
                        // set it to false after drawing.
+
+  std::array<bool, 16> keypadState; // State of the keypad (0 to F)
 
   std::array<uint8_t, 16> reg; // 16 registers (v0 to vF)
   uint16_t pc;                 // Program Counter

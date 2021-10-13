@@ -19,7 +19,29 @@ class Display : public olc::PixelGameEngine {
   float fAccumulatedTime = 0;
 
   uint64_t ticks = 0;
-  bool clockPaused = false;
+  bool clockPaused = true;
+
+  // Original chip-8 keypad layout:
+  // -----------------
+  // | 1 | 2 | 3 | C |
+  // | 4 | 5 | 6 | D |
+  // | 7 | 8 | 9 | E |
+  // | A | 0 | B | F |
+  // -----------------
+  //
+  // Emulated keypad layout on QWERTY:
+  // -----------------
+  // | 1 | 2 | 3 | 4 |
+  // | Q | W | E | R |
+  // | A | S | D | F |
+  // | Z | X | C | V |
+  // -----------------
+  olc::Key keypadLayout[16] = {
+      olc::K1, olc::K2, olc::K3, olc::K4, // | 1 | 2 | 3 | 4 |
+      olc::Q,  olc::W,  olc::E,  olc::R,  // | Q | W | E | R |
+      olc::A,  olc::S,  olc::D,  olc::F,  // | A | S | D | F |
+      olc::Z,  olc::X,  olc::C,  olc::V,  // | Z | X | C | V |
+  };
 
 public:
   Display(chip8::Chip8 *i) {
@@ -98,6 +120,10 @@ public:
 
       if (!clockPaused || tickRequested) {
         ticks++;
+
+        for (int i = 0; i < 16; i++) {
+          interp->keypadState[i] = GetKey(keypadLayout[i]).bHeld;
+        }
 
         interp->Tick();
         fAccumulatedTime -= (1.0f / CLOCK_SPEED);

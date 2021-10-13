@@ -65,7 +65,7 @@ bool Chip8::LoadProgram(std::string filename) {
 
 void Chip8::stackPush(uint16_t data) { stack[sp++] = data; }
 
-uint16_t Chip8::stackPop() { return stack[sp--]; }
+uint16_t Chip8::stackPop() { return stack[--sp]; }
 
 void Chip8::Tick() {
   opcode = mem[pc] << 8 | mem[pc + 1]; // Fetch a 16bit opcode
@@ -91,6 +91,7 @@ void Chip8::Tick() {
     // Return from subroutine
     case 0x00EE: {
       pc = stackPop();
+      pc += 2;
       break;
     }
 
@@ -169,24 +170,21 @@ void Chip8::Tick() {
 
     // 8XY1 (Assign vX = vX | vY)
     case 0x1: {
-      reg[(opcode & 0x0F00) >> 8] =
-          reg[(opcode & 0x0F00) >> 8] | reg[(opcode & 0x00F0) >> 4];
+      reg[(opcode & 0x0F00) >> 8] |= reg[(opcode & 0x00F0) >> 4];
       pc += 2;
       break;
     }
 
     // 8XY2 (Assign vX = vX & vY)
     case 0x2: {
-      reg[(opcode & 0x0F00) >> 8] =
-          reg[(opcode & 0x0F00) >> 8] & reg[(opcode & 0x00F0) >> 4];
+      reg[(opcode & 0x0F00) >> 8] &= reg[(opcode & 0x00F0) >> 4];
       pc += 2;
       break;
     }
 
     // 8XY3 (Assign vX = vX ^ vY)
     case 0x3: {
-      reg[(opcode & 0x0F00) >> 8] =
-          reg[(opcode & 0x0F00) >> 8] ^ reg[(opcode & 0x00F0) >> 4];
+      reg[(opcode & 0x0F00) >> 8] ^= reg[(opcode & 0x00F0) >> 4];
       pc += 2;
       break;
     }
@@ -241,7 +239,7 @@ void Chip8::Tick() {
 
     // 8XYE (Assign vX <<= 1 and store the MSB into vF)
     case 0xE: {
-      reg[0xF] = reg[(opcode & 0x0F00) >> 8] & 0x7;
+      reg[0xF] = reg[(opcode & 0x0F00) >> 8] >> 7;
       reg[(opcode & 0x0F00) >> 8] <<= 1;
       pc += 2;
       break;
@@ -429,6 +427,7 @@ void Chip8::Tick() {
         mem[index + i] = reg[i];
       }
 
+      index += ((opcode & 0x0F00) >> 8) + 1;
       pc += 2;
       break;
     }
@@ -439,6 +438,7 @@ void Chip8::Tick() {
         reg[i] = mem[index + i];
       }
 
+      index += ((opcode & 0x0F00) >> 8) + 1;
       pc += 2;
       break;
     }
