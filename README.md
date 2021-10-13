@@ -16,7 +16,7 @@ C++98 2 years ago for school.
 
 _Debug interface_
 
-./screenshots/release_screenrecord.mp4
+https://user-images.githubusercontent.com/15605299/137184651-490fa5b9-62a3-4274-b273-5b67c461552a.mp4
 
 _Screen recording of the snake game in release mode_
 
