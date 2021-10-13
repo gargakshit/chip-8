@@ -36,6 +36,9 @@ public:
   bool redraw = false; // Only redraw when requested. The display module must
                        // set it to false after drawing.
 
+  bool beep = true; // Signal the display that the system needs to "beep". The
+                    // display module must set it to false after beeping
+
   std::array<bool, 16> keypadState; // State of the keypad (0 to F)
 
   std::array<uint8_t, 16> reg; // 16 registers (v0 to vF)

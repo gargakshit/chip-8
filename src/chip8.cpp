@@ -467,8 +467,10 @@ void Chip8::Tick() {
     delayTimer--;
   }
 
-  // TODO: add actual sound
   if (soundTimer > 0) {
+    if (soundTimer == 1) {
+      beep = true;
+    }
     soundTimer--;
   }
 

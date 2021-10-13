@@ -9,6 +9,7 @@
 #define OLC_PGE_APPLICATION
 #include <olcPixelGameEngine.h>
 
+#include "beep.hpp"
 #include "chip8.hpp"
 
 #define CLOCK_SPEED 700.0f
@@ -173,6 +174,11 @@ public:
                        interp->display[(y * 64) + x] ? olc::WHITE : olc::BLACK);
             }
           }
+        }
+
+        if (interp->beep) {
+          interp->beep = false;
+          chip8::beep();
         }
       }
     }
