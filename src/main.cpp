@@ -1,4 +1,6 @@
 #include <cstdint>
+#include <cstdlib>
+#include <ctime>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
@@ -123,6 +125,9 @@ int main(int args, char **argv) {
     std::cerr << "No chip-8 program specified" << std::endl;
     return 1;
   }
+
+  // Seed the RNG
+  srand((unsigned)time(NULL));
 
   std::cerr << "Loading " << argv[1] << std::endl;
 

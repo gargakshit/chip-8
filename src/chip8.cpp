@@ -1,4 +1,5 @@
 #include <cstdint>
+#include <cstdlib>
 #include <fstream>
 #include <iostream>
 #include <string>
@@ -277,6 +278,13 @@ void Chip8::Tick() {
     break;
   }
 
+  // CXNN (Set vX to rand & NN)
+  case 0xC000: {
+    reg[(opcode & 0x0F00) >> 8] = (rand() % 0xFF) & (opcode & 0x00FF);
+    pc += 2;
+    break;
+  }
+
   // DXYN (Display X, Y, N)
   case 0xD000: {
     auto x = reg[(opcode & 0x0F00) >> 8];
@@ -306,9 +314,6 @@ void Chip8::Tick() {
 
     break;
   }
-
-    // Wrap the program counter after 4kb
-    pc %= 4096;
 
   default:
     invalid = true;
