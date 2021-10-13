@@ -33,6 +33,9 @@ class Chip8 {
 
   std::array<bool, 16> keypadState; // State of the keypad (0 to F)
 
+  void stackPush(uint16_t data);
+  uint16_t stackPop();
+
 public:
   std::array<bool, 64 * 32> display; // State of the 64x32 monochrome display
   bool redraw = false; // Only redraw when requested. The display module must

@@ -41,7 +41,6 @@ void Chip8::Reset() {
 }
 
 bool Chip8::LoadProgram(std::string filename) {
-  std::streampos fileSize;
   std::ifstream ifile;
 
   ifile.open(filename, std::ios::binary);
@@ -49,11 +48,6 @@ bool Chip8::LoadProgram(std::string filename) {
   if (!ifile) {
     return false;
   }
-
-  // Get its size
-  ifile.seekg(0, std::ios::end);
-  fileSize = ifile.tellg();
-  ifile.seekg(0, std::ios::beg);
 
   int i = 0;
   char b;
@@ -67,6 +61,10 @@ bool Chip8::LoadProgram(std::string filename) {
 
   return true;
 }
+
+void Chip8::stackPush(uint16_t data) { stack[sp++] = data; }
+
+uint16_t Chip8::stackPop() { return stack[sp--]; }
 
 void Chip8::Tick() {
   opcode = mem[pc] << 8 | mem[pc + 1]; // Fetch a 16bit opcode
@@ -90,8 +88,7 @@ void Chip8::Tick() {
 
       // Return from subroutine
     case 0x00EE:
-      // TODO: implement
-      pc += 2;
+      pc = stackPop();
       break;
 
       // Call
@@ -111,6 +108,40 @@ void Chip8::Tick() {
     break;
   }
 
+  // 2NNN (Call at NNN)
+  case 0x2000: {
+    stackPush(pc);
+    pc = opcode & 0x0FFF;
+    break;
+  }
+
+  // 3XNN (Skip next if NN == vX)
+  case 0x3000: {
+    if (reg[(opcode & 0x0F00) >> 8] == (opcode & 0x00FF)) {
+      pc += 2;
+    }
+    pc += 2;
+    break;
+  }
+
+  // 4XNN (Skip next if NN != vX)
+  case 0x4000: {
+    if (reg[(opcode & 0x0F00) >> 8] != (opcode & 0x00FF)) {
+      pc += 2;
+    }
+    pc += 2;
+    break;
+  }
+
+  // 5XY0 (Skip next if vX == xY)
+  case 0x5000: {
+    if (reg[(opcode & 0x0F00) >> 8] == reg[(opcode & 0x00F0) >> 4]) {
+      pc += 2;
+    }
+    pc += 2;
+    break;
+  }
+
   // 6XNN (Set reg X to NN)
   case 0x6000: {
     reg[(opcode & 0x0F00) >> 8] = opcode & 0x00FF;
@@ -125,10 +156,25 @@ void Chip8::Tick() {
     break;
   }
 
+  // 9XY0 (Skip next if vX != xY)
+  case 0x9000: {
+    if (reg[(opcode & 0x0F00) >> 8] != reg[(opcode & 0x00F0) >> 4]) {
+      pc += 2;
+    }
+    pc += 2;
+    break;
+  }
+
   // ANNN (Set I to NNN)
   case 0xA000: {
     index = opcode & 0x0FFF;
     pc += 2;
+    break;
+  }
+
+  // BNNN (Jump to v0 + NNN)
+  case 0xB000: {
+    pc = (opcode & 0x0FFF) + reg[0];
     break;
   }
 

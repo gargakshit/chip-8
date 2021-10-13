@@ -105,8 +105,6 @@ public:
 
           for (int y = 0; y < 32; y++) {
             for (int x = 0; x < 64; x++) {
-              // Draw(x, y, interp->display[(y * 64) + x] ? olc::WHITE :
-              // olc::BLACK);
               FillRect(x * DISPLAY_SCALE, y * DISPLAY_SCALE, DISPLAY_SCALE,
                        DISPLAY_SCALE,
                        interp->display[(y * 64) + x] ? olc::WHITE : olc::BLACK);
