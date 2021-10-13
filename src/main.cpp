@@ -12,6 +12,7 @@
 #include "chip8.hpp"
 
 #define CLOCK_SPEED 700.0f
+// #define CLOCK_SPEED 150.0f
 #define DISPLAY_SCALE 6
 
 class Display : public olc::PixelGameEngine {
@@ -19,7 +20,14 @@ class Display : public olc::PixelGameEngine {
   float fAccumulatedTime = 0;
 
   uint64_t ticks = 0;
+
+  // Start with a paused clock on debug mode to enable stepping as soon as the
+  // interpreter is ready
+#ifdef _DEBUG
   bool clockPaused = true;
+#else
+  bool clockPaused = false;
+#endif
 
   // Original chip-8 keypad layout:
   // -----------------
@@ -36,11 +44,17 @@ class Display : public olc::PixelGameEngine {
   // | A | S | D | F |
   // | Z | X | C | V |
   // -----------------
+  // Emulated (Actual)
   olc::Key keypadLayout[16] = {
-      olc::K1, olc::K2, olc::K3, olc::K4, // | 1 | 2 | 3 | 4 |
-      olc::Q,  olc::W,  olc::E,  olc::R,  // | Q | W | E | R |
-      olc::A,  olc::S,  olc::D,  olc::F,  // | A | S | D | F |
-      olc::Z,  olc::X,  olc::C,  olc::V,  // | Z | X | C | V |
+      olc::X,                    // |       | X (0) |       |       |
+      olc::K1, olc::K2, olc::K3, // | 1 (1) | 2 (2) | 3 (3) |       |
+      olc::Q,  olc::W,  olc::E,  // | Q (4) | W (5) | E (6) |       |
+      olc::A,  olc::S,  olc::D,  // | A (7) | S (8) | D (9) |       |
+      olc::Z,  olc::C,           // | Z (A) |       | C (B) |       |
+      olc::K4,                   // |       |       |       | 4 (C) |
+      olc::R,                    // |       |       |       | R (D) |
+      olc::F,                    // |       |       |       | F (E) |
+      olc::V,                    // |       |       |       | V (F) |
   };
 
 public:
@@ -114,6 +128,27 @@ public:
       debugStr << " " << std::setw(2) << +interp->reg[15] << "\n\n";
       // Add index register
       debugStr << "Index Register: " << std::setw(4) << interp->index << "\n\n";
+      // Add keypad state
+      debugStr << "1: " << interp->keypadState[0]
+               << " 2: " << interp->keypadState[1]
+               << " 3: " << interp->keypadState[2]
+               << " C: " << interp->keypadState[3]
+               << "\n4: " << interp->keypadState[4]
+               << " 5: " << interp->keypadState[5]
+               << " 6: " << interp->keypadState[6]
+               << " D: " << interp->keypadState[7]
+               << "\n7: " << interp->keypadState[8]
+               << " 8: " << interp->keypadState[9]
+               << " 9: " << interp->keypadState[10]
+               << " E: " << interp->keypadState[11]
+               << "\nA: " << interp->keypadState[12]
+               << " 0: " << interp->keypadState[13]
+               << " B: " << interp->keypadState[14]
+               << " F: " << interp->keypadState[15] << "\n\n";
+
+      debugStr << "Timers\n"
+               << "Delay: " << std::setw(2) << +interp->delayTimer
+               << "  Sound: " << std::setw(2) << +interp->soundTimer << "\n\n";
 
       DrawString((64 * DISPLAY_SCALE) + 8, 8, debugStr.str());
 #endif

@@ -21,18 +21,18 @@ void Chip8::Reset() {
   soundTimer = 0;
 
   // Clear display
-  for (int i = 0; i < display.size(); i++) {
-    display[i] = false;
+  for (bool &i : display) {
+    i = false;
   }
 
   // Clear registers
-  for (int i = 0; i < reg.size(); i++) {
-    reg[i] = 0;
+  for (unsigned char &i : reg) {
+    i = 0;
   }
 
   // Clear stack
-  for (int i = 0; i < stack.size(); i++) {
-    stack[i] = 0;
+  for (unsigned short &i : stack) {
+    i = 0;
   }
 
   // Load the font into memory
@@ -41,7 +41,7 @@ void Chip8::Reset() {
   }
 }
 
-bool Chip8::LoadProgram(std::string filename) {
+bool Chip8::LoadProgram(const std::string &filename) {
   std::ifstream ifile;
 
   ifile.open(filename, std::ios::binary);
@@ -63,9 +63,16 @@ bool Chip8::LoadProgram(std::string filename) {
   return true;
 }
 
-void Chip8::stackPush(uint16_t data) { stack[sp++] = data; }
+void Chip8::stackPush(uint16_t data) {
+  stack[sp] = data;
+  sp++;
+}
 
-uint16_t Chip8::stackPop() { return stack[--sp]; }
+uint16_t Chip8::stackPop() {
+  sp--;
+  int data = stack[sp];
+  return data;
+}
 
 void Chip8::Tick() {
   opcode = mem[pc] << 8 | mem[pc + 1]; // Fetch a 16bit opcode
@@ -205,9 +212,9 @@ void Chip8::Tick() {
     // 8XY5 (Assign vX -= vY with borrow)
     case 0x5: {
       if (reg[(opcode & 0x00F0) >> 4] > reg[(opcode & 0x0F00) >> 8]) {
-        reg[0xF] = 1;
-      } else {
         reg[0xF] = 0;
+      } else {
+        reg[0xF] = 1;
       }
 
       reg[(opcode & 0x0F00) >> 8] -= reg[(opcode & 0x00F0) >> 4];
@@ -295,14 +302,12 @@ void Chip8::Tick() {
       auto pixel = mem[index + yLine];
 
       for (int xLine = 0; xLine < 8; xLine++) {
-        auto index = (x + xLine + ((y + yLine) * 64));
-
         if ((pixel & (0x80 >> xLine)) != 0) {
-          if (display[index]) {
+          if (display[(x + xLine + ((y + yLine) * 64))] == 1) {
             reg[0xF] = 1;
           }
 
-          display[index] ^= 1;
+          display[x + xLine + ((y + yLine) * 64)] ^= 1;
         }
       }
     }
@@ -423,7 +428,7 @@ void Chip8::Tick() {
 
     // FX55 (Set index, index + 1, index + 2, ... = v0, v1, v2, ..., vX)
     case 0x0055: {
-      for (int i = 0; i < ((opcode & 0x0F00) >> 8); i++) {
+      for (int i = 0; i <= ((opcode & 0x0F00) >> 8); ++i) {
         mem[index + i] = reg[i];
       }
 
@@ -434,7 +439,7 @@ void Chip8::Tick() {
 
     // FX65 (Set v0, v1, ..., vX = index, index + 1, ...)
     case 0x0065: {
-      for (int i = 0; i < ((opcode & 0x0F00) >> 8); i++) {
+      for (int i = 0; i <= ((opcode & 0x0F00) >> 8); ++i) {
         reg[i] = mem[index + i];
       }
 

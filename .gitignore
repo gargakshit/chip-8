@@ -1,6 +1,10 @@
 # Build
 build/
+*build*/
 out/
 
 # Visual Studio stuff
 .vs/
+
+# CLion
+.idea
