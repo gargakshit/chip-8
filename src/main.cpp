@@ -154,6 +154,8 @@ public:
       DrawString((64 * DISPLAY_SCALE) + 8, 8, debugStr.str());
 #endif
 
+      fAccumulatedTime -= (1.0f / CLOCK_SPEED);
+
       if (!clockPaused || tickRequested) {
         ticks++;
 
@@ -162,7 +164,6 @@ public:
         }
 
         interp->Tick();
-        fAccumulatedTime -= (1.0f / CLOCK_SPEED);
 
         if (interp->redraw) {
           interp->redraw = false;
