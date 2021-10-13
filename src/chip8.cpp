@@ -76,7 +76,7 @@ void Chip8::Tick() {
   case 0x0000: {
     switch (opcode) {
     // Clear Screen
-    case 0x00E0:
+    case 0x00E0: {
       for (int i = 0; i < 2048; i++) {
         display[i] = false;
       }
@@ -85,18 +85,19 @@ void Chip8::Tick() {
       redraw = true;
 
       break;
+    }
 
-      // Return from subroutine
-    case 0x00EE:
+    // Return from subroutine
+    case 0x00EE: {
       pc = stackPop();
       break;
+    }
 
-      // Call
-    default:
+    // Call
+    default: {
       invalid = true;
-      pc += 2;
-
       break;
+    }
     }
 
     break;
@@ -153,6 +154,104 @@ void Chip8::Tick() {
   case 0x7000: {
     reg[(opcode & 0x0F00) >> 8] += opcode & 0x00FF;
     pc += 2;
+    break;
+  }
+
+  case 0x8000: {
+    switch (opcode & 0x000F) {
+    // 8XY0 (Assign vX = vY)
+    case 0x0: {
+      reg[(opcode & 0x0F00) >> 8] = reg[(opcode & 0x00F0) >> 4];
+      pc += 2;
+      break;
+    }
+
+    // 8XY1 (Assign vX = vX | vY)
+    case 0x1: {
+      reg[(opcode & 0x0F00) >> 8] =
+          reg[(opcode & 0x0F00) >> 8] | reg[(opcode & 0x00F0) >> 4];
+      pc += 2;
+      break;
+    }
+
+    // 8XY2 (Assign vX = vX & vY)
+    case 0x2: {
+      reg[(opcode & 0x0F00) >> 8] =
+          reg[(opcode & 0x0F00) >> 8] & reg[(opcode & 0x00F0) >> 4];
+      pc += 2;
+      break;
+    }
+
+    // 8XY3 (Assign vX = vX ^ vY)
+    case 0x3: {
+      reg[(opcode & 0x0F00) >> 8] =
+          reg[(opcode & 0x0F00) >> 8] ^ reg[(opcode & 0x00F0) >> 4];
+      pc += 2;
+      break;
+    }
+
+    // 8XY4 (Assign vX += vY with carry)
+    case 0x4: {
+      if (reg[(opcode & 0x00F0) >> 4] > (0xFF - reg[(opcode & 0x0F00) >> 8])) {
+        reg[0xF] = 1;
+      } else {
+        reg[0xF] = 0;
+      }
+
+      reg[(opcode & 0x0F00) >> 8] += reg[(opcode & 0x00F0) >> 4];
+      pc += 2;
+      break;
+    }
+
+    // 8XY5 (Assign vX -= vY with borrow)
+    case 0x5: {
+      if (reg[(opcode & 0x00F0) >> 4] > reg[(opcode & 0x0F00) >> 8]) {
+        reg[0xF] = 1;
+      } else {
+        reg[0xF] = 0;
+      }
+
+      reg[(opcode & 0x0F00) >> 8] -= reg[(opcode & 0x00F0) >> 4];
+      pc += 2;
+      break;
+    }
+
+    // 8XY6 (Assign vX >>= 1 and store the LSB into vF)
+    case 0x6: {
+      reg[0xF] = reg[(opcode & 0x0F00) >> 8] & 0x1;
+      reg[(opcode & 0x0F00) >> 8] >>= 1;
+      pc += 2;
+      break;
+    }
+
+    // 8XY7 (Assign vX = vY = vX with borrow)
+    case 0x7: {
+      if (reg[(opcode & 0x0F00) >> 8] > reg[(opcode & 0x00F0) >> 4]) {
+        reg[0xF] = 0;
+      } else {
+        reg[0xF] = 1;
+      }
+
+      reg[(opcode & 0x0F00) >> 8] =
+          reg[(opcode & 0x00F0) >> 4] - reg[(opcode & 0x0F00) >> 8];
+      pc += 2;
+      break;
+    }
+
+    // 8XYE (Assign vX <<= 1 and store the MSB into vF)
+    case 0xE: {
+      reg[0xF] = reg[(opcode & 0x0F00) >> 8] & 0x7;
+      reg[(opcode & 0x0F00) >> 8] <<= 1;
+      pc += 2;
+      break;
+    }
+
+    default: {
+      invalid = true;
+      break;
+    }
+    }
+
     break;
   }
 
@@ -213,8 +312,6 @@ void Chip8::Tick() {
 
   default:
     invalid = true;
-    pc += 2;
-
     break;
   }
 
