@@ -7,7 +7,7 @@ project(chip-8)
 # Creates the variable EXEC and sets it to hello
 set(EXEC chip8)
 
-# set the C++14 standard
+# set the C++17 standard
 set(CMAKE_CXX_STANDARD 17)
 
 # Set the submodule directory

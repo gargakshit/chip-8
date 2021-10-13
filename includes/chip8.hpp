@@ -1,5 +1,7 @@
 #include <array>
+#include <atomic>
 #include <cstdint>
+#include <shared_mutex>
 #include <string>
 
 namespace chip8 {
@@ -40,8 +42,11 @@ class Chip8 {
   std::array<bool, 16> keypadState; // State of the keypad (0 to F)
 
 public:
-  std::array<bool, 64 * 32> display; // State of the 64x32 monochrome display
-  bool abort = false;
+  std::array<std::atomic_bool, 64 * 32>
+      display; // State of the 64x32 monochrome display
+  std::atomic_bool draw =
+      false; // Made true when the display state is modified. This is
+             // expected to be flipped to false by the drawing routines
 
   void Reset();
   bool LoadProgram(std::string filename);

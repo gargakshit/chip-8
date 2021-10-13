@@ -1,15 +1,24 @@
+#include <atomic>
+#include <cstdint>
 #include <iostream>
+#include <stdint.h>
+#include <thread>
 
 #define OLC_PGE_APPLICATION
 #include <olcPixelGameEngine.h>
 
 #include "chip8.hpp"
+#include "high_res_timer.hpp"
 
-#define CLOCK_SPEED 700.0f
+#define CLOCK_SPEED 700
+#define NANO_SECONDS_PER_TICK 1428000
 
 class Display : public olc::PixelGameEngine {
   chip8::Chip8 *interp;
   float fAccumulatedTime = 0;
+
+  std::atomic_bool ticking = false;
+  std::thread ticking_thread;
 
 public:
   Display(chip8::Chip8 *i) {
@@ -17,21 +26,50 @@ public:
     interp = i;
   }
 
-  bool OnUserCreate() override { return true; }
+  void ticker() {
+    uint64_t start = timer::ns();
+    uint64_t delta = 0;
+
+    while (ticking) {
+      auto current = timer::ns();
+      delta += current - start;
+      start = current;
+
+      if (delta >= NANO_SECONDS_PER_TICK) {
+        interp->Tick();
+        delta = 0;
+      }
+    }
+  }
+
+  bool OnUserCreate() override {
+    if (ticking) {
+      return false;
+    }
+
+    Clear(olc::BLACK);
+
+    ticking = true;
+    ticking_thread = std::thread(&Display::ticker, this);
+
+    return true;
+  }
+
+  bool OnUserDestroy() override {
+    ticking = false;
+
+    return true;
+  }
 
   bool OnUserUpdate(float fElapsedTime) override {
     fAccumulatedTime += fElapsedTime;
-    // Tick the CPU clock roughly at ~700Hz. This is not accurate by any means,
-    // but works fine when the yielded framerate is more than 700. Due to how
-    // this works, this requires VSync to be disabled.
-    if (fAccumulatedTime >= 1.0f / CLOCK_SPEED) {
-      interp->Tick();
-      fAccumulatedTime -= (1.0f / CLOCK_SPEED);
-    }
+    if (interp->draw) {
+      interp->draw = false;
 
-    for (int y = 0; y < ScreenHeight(); y++) {
-      for (int x = 0; x < ScreenWidth(); x++) {
-        Draw(x, y, interp->display[(y * 64) + x] ? olc::WHITE : olc::BLACK);
+      for (int y = 0; y < 32; y++) {
+        for (int x = 0; x < 64; x++) {
+          Draw(x, y, interp->display[(y * 64) + x] ? olc::WHITE : olc::BLACK);
+        }
       }
     }
 
@@ -59,7 +97,7 @@ int main(int args, char **argv) {
     return 1;
   }
 
-  if (application.Construct(64, 32, 16, 16)) {
+  if (application.Construct(64, 32, 16, 16, false, true)) {
     application.Start();
   }
 

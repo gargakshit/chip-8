@@ -69,15 +69,6 @@ bool Chip8::LoadProgram(std::string filename) {
 }
 
 void Chip8::Tick() {
-  if (pc >= 644) {
-    abort = true;
-    std::cerr << "Setting abort to true" << std::endl;
-  }
-
-  if (abort) {
-    return;
-  }
-
   opcode = mem[pc] << 8 | mem[pc + 1]; // Fetch a 16bit opcode
 
   bool invalid = false;
@@ -91,6 +82,7 @@ void Chip8::Tick() {
       for (int i = 0; i < 2048; i++) {
         display[i] = false;
       }
+      draw = true;
 
       pc += 2;
 
@@ -152,17 +144,20 @@ void Chip8::Tick() {
       auto pixel = mem[index + yLine];
 
       for (int xLine = 0; xLine < 8; xLine++) {
+        auto idx = x + xLine + ((y + yLine) * 64);
+
         if ((pixel & (0x80 >> xLine)) != 0) {
-          if (display[(x + xLine + ((y + yLine) * 64))]) {
+          if (display[idx]) {
             reg[0xF] = 1;
           }
 
-          display[x + xLine + ((y + yLine) * 64)] ^= 1;
+          display[idx] = !display[idx];
         }
       }
     }
 
     pc += 2;
+    draw = true;
 
     break;
   }
