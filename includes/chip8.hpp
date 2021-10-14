@@ -3,6 +3,7 @@
 #include <string>
 
 namespace chip8 {
+#pragma once
 class Chip8 {
   uint8_t font[80] = {
       0xF0, 0x90, 0x90, 0x90, 0xF0, // 0

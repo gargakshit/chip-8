@@ -12,8 +12,7 @@
 
 #include "chip8.hpp"
 #include "font.h"
-
-#define DISPLAY_SCALE 12
+#include "gui.hpp"
 
 // Ummmm
 #if defined(_MSC_VER) && (_MSC_VER >= 1900) &&                                 \
@@ -25,47 +24,14 @@ static void glfw_error_callback(int error, const char *description) {
   std::cerr << "GLFW Error " << error << ": " << description << std::endl;
 }
 
-// This assumes the pixels were already allocated to match the scale
-void RenderDisplay(GLubyte *pixels, GLuint texture, chip8::Chip8 *interp) {
-  ImGui::Begin("Display", NULL,
-               ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse |
-                   ImGuiWindowFlags_NoNavFocus);
+int main(int args, char **argv) {
+  if (args < 2) {
+    std::cerr << "Usage:" << std::endl
+              << argv[0] << " path/to/chip8/program" << std::endl;
 
-  ImGui::SetWindowSize(
-      ImVec2(32 + (64 * DISPLAY_SCALE), 48 + (32 * DISPLAY_SCALE)));
-
-  if (interp->redraw) {
-    for (int y = 0; y < 32; y++) {
-      for (int x = 0; x < 64; x++) {
-        int subpixel = interp->display[(y * 64) + x] ? 255 : 0;
-
-        for (int xScale = 0; xScale < DISPLAY_SCALE; xScale++) {
-          for (int yScale = 0; yScale < DISPLAY_SCALE; yScale++) {
-            int i = ((((y * DISPLAY_SCALE * 64) * DISPLAY_SCALE) +
-                      (x * DISPLAY_SCALE) + xScale) +
-                     (yScale * DISPLAY_SCALE * 64)) *
-                    3;
-
-            pixels[i] = subpixel;
-            pixels[i + 1] = subpixel;
-            pixels[i + 2] = subpixel;
-          }
-        }
-      }
-    }
+    return 1;
   }
 
-  // Render it onto the opengl texture
-  glBindTexture(GL_TEXTURE_2D, texture);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 64 * DISPLAY_SCALE, 32 * DISPLAY_SCALE,
-               0, GL_RGB, GL_UNSIGNED_BYTE, pixels);
-
-  ImGui::Image((void *)(intptr_t)texture,
-               ImVec2(64 * DISPLAY_SCALE, 32 * DISPLAY_SCALE));
-  ImGui::End();
-}
-
-int main(int, char **) {
   // Setup window
   glfwSetErrorCallback(glfw_error_callback);
   if (!glfwInit()) {
@@ -153,10 +119,12 @@ int main(int, char **) {
   chip8::Chip8 interp;
   interp.Reset();
 
-  if (!interp.LoadProgram("./programs/IBM_Logo.ch8")) {
-    std::cerr << "Unable to load" << std::endl;
+  if (!interp.LoadProgram(argv[1])) {
+    std::cerr << "Unable to load " << argv[1] << std::endl;
     return -1;
   }
+
+  chip8::GUI gui(&interp, displayTexture, displayPixels);
 
   while (!glfwWindowShouldClose(window)) {
     glfwPollEvents();
@@ -165,8 +133,7 @@ int main(int, char **) {
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
-    interp.Tick();
-    RenderDisplay(displayPixels, displayTexture, &interp);
+    gui.Render();
 
     // Rendering
     ImGui::Render();
