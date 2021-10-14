@@ -207,21 +207,41 @@ inline void GUI::RenderMemory() {
 inline void GUI::RenderKeypadState() {
   ImGui::Begin("Keypad", NULL, ImGuiWindowFlags_AlwaysAutoResize);
 
-  if (ImGui::BeginTable("Keypad", 4)) {
-    for (int i = 0; i < 4; i++) {
-      ImGui::TableNextRow();
+  ImGui::TextColored(interp->keypadState[0x1] ? successColor : labelColor, "1");
+  ImGui::SameLine();
+  ImGui::TextColored(interp->keypadState[0x2] ? successColor : labelColor, "2");
+  ImGui::SameLine();
+  ImGui::TextColored(interp->keypadState[0x3] ? successColor : labelColor, "3");
+  ImGui::SameLine();
+  ImGui::TextColored(interp->keypadState[0xC] ? successColor : labelColor, "C");
+  ImGui::Separator();
 
-      for (int j = 0; j < 4; j++) {
-        ImGui::TableSetColumnIndex(j);
-        ImGui::TextColored(interp->keypadState[(i * 4) + j] ? successColor
-                                                            : labelColor,
-                           "%X", (i * 4) + j);
-      }
-      ImGui::Separator();
-    }
+  ImGui::TextColored(interp->keypadState[0x4] ? successColor : labelColor, "4");
+  ImGui::SameLine();
+  ImGui::TextColored(interp->keypadState[0x5] ? successColor : labelColor, "5");
+  ImGui::SameLine();
+  ImGui::TextColored(interp->keypadState[0x6] ? successColor : labelColor, "6");
+  ImGui::SameLine();
+  ImGui::TextColored(interp->keypadState[0xD] ? successColor : labelColor, "D");
+  ImGui::Separator();
 
-    ImGui::EndTable();
-  }
+  ImGui::TextColored(interp->keypadState[0x7] ? successColor : labelColor, "7");
+  ImGui::SameLine();
+  ImGui::TextColored(interp->keypadState[0x8] ? successColor : labelColor, "8");
+  ImGui::SameLine();
+  ImGui::TextColored(interp->keypadState[0x9] ? successColor : labelColor, "9");
+  ImGui::SameLine();
+  ImGui::TextColored(interp->keypadState[0xE] ? successColor : labelColor, "E");
+  ImGui::Separator();
+
+  ImGui::TextColored(interp->keypadState[0xA] ? successColor : labelColor, "A");
+  ImGui::SameLine();
+  ImGui::TextColored(interp->keypadState[0x0] ? successColor : labelColor, "0");
+  ImGui::SameLine();
+  ImGui::TextColored(interp->keypadState[0xB] ? successColor : labelColor, "B");
+  ImGui::SameLine();
+  ImGui::TextColored(interp->keypadState[0xF] ? successColor : labelColor, "F");
+  ImGui::Separator();
 
   ImGui::End();
 }
@@ -232,7 +252,7 @@ void GUI::RenderStack() {
   for (int i = 0; i < 16; i++) {
     ImGui::TextColored(interp->sp == i ? successColor : labelColor, "%X", i);
     ImGui::SameLine();
-    ImGui::Text("%02X", interp->stack[i]);
+    ImGui::Text("%04X", interp->stack[i]);
   }
 
   ImGui::End();
