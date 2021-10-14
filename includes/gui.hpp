@@ -1,4 +1,5 @@
 #include <GLFW/glfw3.h>
+#include <imgui.h>
 
 #include "chip8.hpp"
 
@@ -19,14 +20,27 @@ class GUI {
       GLFW_KEY_V,                         // |       |       |       | V (F) |
   };
 
+  ImVec4 fgColor = ImVec4(1, 1, 1, 1);
+  ImVec4 bgColor = ImVec4(0, 0, 0, 1);
+  ImVec4 labelColor = ImVec4(1.0f, 0.3f, 0.3f, 1.0f);
+
+  int ticks = 0;
+  bool tickRequested = false;
+
   int clock = 960;
+  int prevClock = clock;
   Chip8 *interp;
 
   GLuint displayTexture;
   GLubyte *displayPixels;
 
-  inline void RenderDisplay();
-  inline void RenderMetrics(float framerate);
+  inline void Tick();
+
+  inline void RenderDisplay(float);
+  inline void RenderGeneral(float);
+  inline void RenderRegisters();
+  inline void RenderDebug();
+  inline void RenderMemory();
 
 public:
   GUI(Chip8 *, GLuint, GLubyte *);

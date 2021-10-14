@@ -1,4 +1,5 @@
 #include <GLFW/glfw3.h>
+#include <cstdint>
 #include <imgui.h>
 
 #include "beep.hpp"
@@ -11,12 +12,37 @@ GUI::GUI(Chip8 *c8, GLuint texture, GLubyte *pixels) {
   displayPixels = pixels;
 }
 
-inline void GUI::RenderDisplay() {
+inline void GUI::Tick() {
+  // Get the keyboard state every tick only if the current window has focus
+  if (ImGui::IsWindowFocused()) {
+    for (int i = 0; i < 16; i++) {
+      interp->keypadState[i] = ImGui::IsKeyDown(keymap[i]);
+    }
+  }
+
+  ticks++;
+  interp->Tick();
+}
+
+inline void GUI::RenderDisplay(float framerate) {
   ImGui::Begin("Display", NULL,
-               ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
+               ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse |
+                   ImGuiWindowFlags_NoTitleBar);
 
   ImGui::SetWindowSize(
       ImVec2(32 + (64 * DISPLAY_SCALE), 48 + (32 * DISPLAY_SCALE)));
+
+  // Explicitly requested
+  if (tickRequested) {
+    tickRequested = false;
+    Tick();
+  }
+
+  // Tick the clock frequency divided by framerate. Not the best way, but heh
+  // it works while consuming sane amounts of CPU and GPU
+  for (int i = 0; i < (clock / framerate); i++) {
+    Tick();
+  }
 
   if (interp->beep) {
     interp->beep = false;
@@ -25,10 +51,22 @@ inline void GUI::RenderDisplay() {
 
   if (interp->redraw) {
     interp->redraw = false;
+
+    int fg[3] = {
+        static_cast<int>(fgColor.x * 255),
+        static_cast<int>(fgColor.y * 255),
+        static_cast<int>(fgColor.z * 255),
+    };
+    int bg[3] = {
+        static_cast<int>(bgColor.x * 255),
+        static_cast<int>(bgColor.y * 255),
+        static_cast<int>(bgColor.z * 255),
+    };
+
     // Draw scaled display
     for (int y = 0; y < 32; y++) {
       for (int x = 0; x < 64; x++) {
-        int subpixel = interp->display[(y * 64) + x] ? 255 : 0;
+        int *subpixel = interp->display[(y * 64) + x] ? fg : bg;
 
         for (int xScale = 0; xScale < DISPLAY_SCALE; xScale++) {
           for (int yScale = 0; yScale < DISPLAY_SCALE; yScale++) {
@@ -37,9 +75,9 @@ inline void GUI::RenderDisplay() {
                      (yScale * DISPLAY_SCALE * 64)) *
                     3;
 
-            displayPixels[i] = subpixel;
-            displayPixels[i + 1] = subpixel;
-            displayPixels[i + 2] = subpixel;
+            displayPixels[i] = subpixel[0];
+            displayPixels[i + 1] = subpixel[1];
+            displayPixels[i + 2] = subpixel[2];
           }
         }
       }
@@ -56,31 +94,113 @@ inline void GUI::RenderDisplay() {
   ImGui::End();
 }
 
-inline void GUI::RenderMetrics(float framerate) {
-  ImGui::Begin("Metrics", NULL,
-               ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse |
-                   ImGuiWindowFlags_AlwaysAutoResize);
-  ImGui::Text("FPS:   %f", framerate);
-  ImGui::Text("Clock: %dHz", clock);
-  ImGui::Text("Scale: %d", DISPLAY_SCALE);
+inline void GUI::RenderGeneral(float framerate) {
+  ImGui::Begin("General", NULL, ImGuiWindowFlags_AlwaysAutoResize);
+
+  ImGui::TextColored(labelColor, "FPS:");
+  ImGui::SameLine();
+  ImGui::Text("%f", framerate);
+
+  ImGui::TextColored(labelColor, "Ticks:");
+  ImGui::SameLine();
+  ImGui::Text("%d", ticks);
+
+  ImGui::TextColored(labelColor, "Display Scale:");
+  ImGui::SameLine();
+  ImGui::Text("%d", DISPLAY_SCALE);
+
+  ImGui::TextColored(labelColor, "Clock:");
+  ImGui::SameLine();
+  ImGui::InputInt("Hz", &clock);
+
+  ImGui::ColorEdit3("FG Color", (float *)&fgColor);
+  ImGui::ColorEdit3("BG Color", (float *)&bgColor);
+
+  ImGui::End();
+}
+
+inline void GUI::RenderRegisters() {
+  ImGui::Begin("Registers", NULL, ImGuiWindowFlags_AlwaysAutoResize);
+
+  ImGui::TextColored(labelColor, "PC:");
+  ImGui::SameLine();
+  ImGui::Text("%04X", interp->pc);
+
+  ImGui::TextColored(labelColor, "IR:");
+  ImGui::SameLine();
+  ImGui::Text("%04X", interp->index);
+
+  ImGui::TextColored(labelColor, "OP:");
+  ImGui::SameLine();
+  ImGui::Text("%04X", interp->opcode);
+
+  // Render registers
+  ImGui::NewLine();
+  ImGui::TextColored(labelColor, "Reg (V)");
+
+  for (int i = 0; i < 16; i++) {
+    ImGui::TextColored(labelColor, "%01X:", i);
+    ImGui::SameLine();
+    ImGui::Text("%02X  ", interp->reg[i]);
+    if (i % 2 == 0) {
+      ImGui::SameLine();
+    }
+  }
+
+  ImGui::End();
+}
+
+inline void GUI::RenderDebug() {
+  ImGui::Begin("Debug", NULL, ImGuiWindowFlags_AlwaysAutoResize);
+
+  ImGui::TextColored(labelColor, "Status");
+  ImGui::Text(clock == 0 ? "Paused" : "Running");
+
+  ImGui::TextColored(labelColor, "Clock");
+  if (ImGui::Button(clock == 0 ? "Resume" : "Pause")) {
+    if (clock == 0) {
+      clock = prevClock;
+    } else {
+      prevClock = clock;
+      clock = 0;
+    }
+  }
+
+  if (ImGui::Button("Tick")) {
+    tickRequested = true;
+  }
+
+  ImGui::End();
+}
+
+inline void GUI::RenderMemory() {
+  ImGui::Begin("Memory", NULL, ImGuiWindowFlags_AlwaysAutoResize);
+
+  uint16_t address = 0;
+  while (address < 4096) {
+    ImGui::TextColored(labelColor, "%04X", address);
+    ImGui::SameLine();
+
+    for (int i = 0; i < 8; i++) {
+      ImGui::Text("%02X", interp->mem[address + i]);
+      ImGui::SameLine();
+    }
+
+    ImGui::NewLine();
+
+    address += 8;
+  }
+
   ImGui::End();
 }
 
 void GUI::Render() {
   auto framerate = ImGui::GetIO().Framerate;
 
-  // Tick the clock CPU_CLOCK divided by framerate. Not the best way, but heh
-  // it works while consuming sane amounts of CPU and GPU
-  for (int i = 0; i < (clock / framerate); i++) {
-    // Get the keyboard state every tick
-    for (int i = 0; i < 16; i++) {
-      interp->keypadState[i] = ImGui::IsKeyDown(keymap[i]);
-    }
-
-    interp->Tick();
-  }
-
-  RenderDisplay();
-  RenderMetrics(framerate);
+  RenderDisplay(framerate);
+  RenderGeneral(framerate);
+  RenderRegisters();
+  RenderDebug();
+  RenderMemory();
 }
 } // namespace chip8

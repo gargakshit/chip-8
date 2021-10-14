@@ -1,5 +1,4 @@
 #include <GLFW/glfw3.h>
-#include <gl/gl.h>
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
@@ -9,6 +8,8 @@
 #endif
 
 #include <iostream>
+#include <stdlib.h>
+#include <time.h>
 
 #include "chip8.hpp"
 #include "font.h"
@@ -28,9 +29,10 @@ int main(int args, char **argv) {
   if (args < 2) {
     std::cerr << "Usage:" << std::endl
               << argv[0] << " path/to/chip8/program" << std::endl;
-
     return 1;
   }
+
+  srand((unsigned)time(NULL));
 
   // Setup window
   glfwSetErrorCallback(glfw_error_callback);
@@ -70,8 +72,9 @@ int main(int args, char **argv) {
   ImGuiIO &io = ImGui::GetIO();
   (void)io;
 
-  // io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+  io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
   io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+  io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 
   GLubyte displayPixels[64 * 32 * DISPLAY_SCALE * DISPLAY_SCALE * 3];
   int pixelIndex = 0;
@@ -98,7 +101,7 @@ int main(int args, char **argv) {
 
   auto &style = ImGui::GetStyle();
   style.FrameRounding = 2;
-  style.FramePadding = ImVec2(12, 1);
+  // style.FramePadding = ImVec2(2, 1);
   style.WindowRounding = 4;
   style.WindowPadding = ImVec2(16, 12);
   style.Colors[ImGuiCol_WindowBg] =
@@ -137,6 +140,7 @@ int main(int args, char **argv) {
 
     // Rendering
     ImGui::Render();
+
     int display_w, display_h;
     glfwGetFramebufferSize(window, &display_w, &display_h);
     glViewport(0, 0, display_w, display_h);
@@ -144,6 +148,14 @@ int main(int args, char **argv) {
                  clear_color.z * clear_color.w, clear_color.w);
     glClear(GL_COLOR_BUFFER_BIT);
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+    // Update and Render additional Platform Windows
+    if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
+      GLFWwindow *backup_current_context = glfwGetCurrentContext();
+      ImGui::UpdatePlatformWindows();
+      ImGui::RenderPlatformWindowsDefault();
+      glfwMakeContextCurrent(backup_current_context);
+    }
 
     glfwSwapBuffers(window);
   }

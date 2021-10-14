@@ -24,8 +24,6 @@ class Chip8 {
       0xF0, 0x80, 0xF0, 0x80, 0x80, // F
   };
 
-  std::array<uint8_t, 4096> mem; // 4kb memory
-
   std::array<uint16_t, 16> stack; // Stack with size of 16
   uint8_t sp;                     // Stack pointer
 
@@ -39,6 +37,8 @@ public:
 
   bool beep = true; // Signal the display that the system needs to "beep". The
                     // display module must set it to false after beeping
+
+  std::array<uint8_t, 4096> mem; // 4kb memory
 
   std::array<bool, 16> keypadState; // State of the keypad (0 to F)
 
