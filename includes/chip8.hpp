@@ -24,9 +24,6 @@ class Chip8 {
       0xF0, 0x80, 0xF0, 0x80, 0x80, // F
   };
 
-  std::array<uint16_t, 16> stack; // Stack with size of 16
-  uint8_t sp;                     // Stack pointer
-
   void stackPush(uint16_t data);
   uint16_t stackPop();
 
@@ -46,6 +43,9 @@ public:
   uint16_t pc;                 // Program Counter
   uint16_t index;              // Index register
   uint16_t opcode;             // Current opcode
+
+  std::array<uint16_t, 16> stack; // Stack with size of 16
+  uint8_t sp;                     // Stack pointer
 
   uint8_t delayTimer; // 8 bit delay timer
   uint8_t soundTimer; // 8 bit sound timer

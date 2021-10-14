@@ -119,8 +119,8 @@ inline void GUI::RenderGeneral(float framerate) {
   ImGui::End();
 }
 
-inline void GUI::RenderRegisters() {
-  ImGui::Begin("Registers", NULL, ImGuiWindowFlags_AlwaysAutoResize);
+inline void GUI::RenderCPUState() {
+  ImGui::Begin("CPU State", NULL, ImGuiWindowFlags_AlwaysAutoResize);
 
   ImGui::TextColored(labelColor, "PC:");
   ImGui::SameLine();
@@ -146,6 +146,16 @@ inline void GUI::RenderRegisters() {
       ImGui::SameLine();
     }
   }
+
+  ImGui::NewLine();
+
+  ImGui::TextColored(labelColor, "DT:");
+  ImGui::SameLine();
+  ImGui::Text("%02X", interp->delayTimer);
+
+  ImGui::TextColored(labelColor, "ST:");
+  ImGui::SameLine();
+  ImGui::Text("%02X", interp->soundTimer);
 
   ImGui::End();
 }
@@ -194,13 +204,49 @@ inline void GUI::RenderMemory() {
   ImGui::End();
 }
 
+inline void GUI::RenderKeypadState() {
+  ImGui::Begin("Keypad", NULL, ImGuiWindowFlags_AlwaysAutoResize);
+
+  if (ImGui::BeginTable("Keypad", 4)) {
+    for (int i = 0; i < 4; i++) {
+      ImGui::TableNextRow();
+
+      for (int j = 0; j < 4; j++) {
+        ImGui::TableSetColumnIndex(j);
+        ImGui::TextColored(interp->keypadState[(i * 4) + j] ? successColor
+                                                            : labelColor,
+                           "%X", (i * 4) + j);
+      }
+      ImGui::Separator();
+    }
+
+    ImGui::EndTable();
+  }
+
+  ImGui::End();
+}
+
+void GUI::RenderStack() {
+  ImGui::Begin("Stack", NULL, ImGuiWindowFlags_AlwaysAutoResize);
+
+  for (int i = 0; i < 16; i++) {
+    ImGui::TextColored(interp->sp == i ? successColor : labelColor, "%X", i);
+    ImGui::SameLine();
+    ImGui::Text("%02X", interp->stack[i]);
+  }
+
+  ImGui::End();
+}
+
 void GUI::Render() {
   auto framerate = ImGui::GetIO().Framerate;
 
   RenderDisplay(framerate);
   RenderGeneral(framerate);
-  RenderRegisters();
+  RenderCPUState();
   RenderDebug();
   RenderMemory();
+  RenderKeypadState();
+  RenderStack();
 }
 } // namespace chip8
