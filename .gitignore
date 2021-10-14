@@ -8,3 +8,5 @@ out/
 
 # CLion
 .idea
+
+imgui.ini

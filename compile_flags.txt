@@ -1,4 +1,7 @@
 -I./submodules/olcPixelGameEngine
+-I./submodules/glfw/include
+-I./submodules/imgui
+-I./submodules/imgui/backends
 -I./includes
 -std=c++17
 -D_DEBUG
