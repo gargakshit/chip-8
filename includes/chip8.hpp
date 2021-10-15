@@ -3,6 +3,7 @@
 #include <string>
 
 namespace chip8 {
+#pragma once
 class Chip8 {
   uint8_t font[80] = {
       0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
@@ -23,11 +24,6 @@ class Chip8 {
       0xF0, 0x80, 0xF0, 0x80, 0x80, // F
   };
 
-  std::array<uint8_t, 4096> mem; // 4kb memory
-
-  std::array<uint16_t, 16> stack; // Stack with size of 16
-  uint8_t sp;                     // Stack pointer
-
   void stackPush(uint16_t data);
   uint16_t stackPop();
 
@@ -39,12 +35,17 @@ public:
   bool beep = true; // Signal the display that the system needs to "beep". The
                     // display module must set it to false after beeping
 
+  std::array<uint8_t, 4096> mem; // 4kb memory
+
   std::array<bool, 16> keypadState; // State of the keypad (0 to F)
 
   std::array<uint8_t, 16> reg; // 16 registers (v0 to vF)
   uint16_t pc;                 // Program Counter
   uint16_t index;              // Index register
   uint16_t opcode;             // Current opcode
+
+  std::array<uint16_t, 16> stack; // Stack with size of 16
+  uint8_t sp;                     // Stack pointer
 
   uint8_t delayTimer; // 8 bit delay timer
   uint8_t soundTimer; // 8 bit sound timer

@@ -1,223 +1,172 @@
-#include <cstdint>
-#include <cstdlib>
-#include <ctime>
-#include <iomanip>
+#include <GLFW/glfw3.h>
+#include <imgui.h>
+#include <imgui_impl_glfw.h>
+#include <imgui_impl_opengl3.h>
+#include <imgui_internal.h>
+#if defined(IMGUI_IMPL_OPENGL_ES2)
+#include <GLES2/gl2.h>
+#endif
+
 #include <iostream>
-#include <sstream>
-#include <string>
+#include <stdlib.h>
+#include <time.h>
 
-#define OLC_PGE_APPLICATION
-#include <olcPixelGameEngine.h>
-
-#include "beep.hpp"
 #include "chip8.hpp"
+#include "font.h"
+#include "gui.hpp"
 
-#define CLOCK_SPEED 700.0f
-// #define CLOCK_SPEED 150.0f
-#define DISPLAY_SCALE 6
-
-class Display : public olc::PixelGameEngine {
-  chip8::Chip8 *interp;
-  float fAccumulatedTime = 0;
-
-  uint64_t ticks = 0;
-
-  // Start with a paused clock on debug mode to enable stepping as soon as the
-  // interpreter is ready
-#ifdef _DEBUG
-  bool clockPaused = true;
-#else
-  bool clockPaused = false;
+// Ummmm
+#if defined(_MSC_VER) && (_MSC_VER >= 1900) &&                                 \
+    !defined(IMGUI_DISABLE_WIN32_FUNCTIONS)
+#pragma comment(lib, "legacy_stdio_definitions")
 #endif
 
-  // Original chip-8 keypad layout:
-  // -----------------
-  // | 1 | 2 | 3 | C |
-  // | 4 | 5 | 6 | D |
-  // | 7 | 8 | 9 | E |
-  // | A | 0 | B | F |
-  // -----------------
-  //
-  // Emulated keypad layout on QWERTY:
-  // -----------------
-  // | 1 | 2 | 3 | 4 |
-  // | Q | W | E | R |
-  // | A | S | D | F |
-  // | Z | X | C | V |
-  // -----------------
-  // Emulated (Actual)
-  olc::Key keypadLayout[16] = {
-      olc::X,                    // |       | X (0) |       |       |
-      olc::K1, olc::K2, olc::K3, // | 1 (1) | 2 (2) | 3 (3) |       |
-      olc::Q,  olc::W,  olc::E,  // | Q (4) | W (5) | E (6) |       |
-      olc::A,  olc::S,  olc::D,  // | A (7) | S (8) | D (9) |       |
-      olc::Z,  olc::C,           // | Z (A) |       | C (B) |       |
-      olc::K4,                   // |       |       |       | 4 (C) |
-      olc::R,                    // |       |       |       | R (D) |
-      olc::F,                    // |       |       |       | F (E) |
-      olc::V,                    // |       |       |       | V (F) |
-  };
-
-public:
-  Display(chip8::Chip8 *i) {
-#ifdef _DEBUG
-    sAppName = "Chip-8 DEBUG";
-#else
-    sAppName = "Chip-8";
-#endif
-
-    interp = i;
-  }
-
-  bool OnUserCreate() override {
-    Clear(olc::DARK_BLUE);
-    FillRect(0, 0, 64 * DISPLAY_SCALE, 32 * DISPLAY_SCALE, olc::BLACK);
-
-    DrawString(4, (32 * DISPLAY_SCALE) + 4,
-               "Space: Pause    Enter: Tick clock");
-
-    return true;
-  }
-
-  bool OnUserUpdate(float fElapsedTime) override {
-    fAccumulatedTime += fElapsedTime;
-    // Tick the CPU clock roughly at ~700Hz. This is not accurate by any means,
-    // but works fine when the yielded framerate is more than 700. Due to how
-    // this works, this requires VSync to be disabled.
-    if (fAccumulatedTime >= 1.0f / CLOCK_SPEED) {
-      if (GetKey(olc::SPACE).bPressed) {
-        clockPaused ^= 1;
-      }
-
-      bool tickRequested = GetKey(olc::ENTER).bPressed;
-
-#ifdef _DEBUG
-      FillRect(64 * DISPLAY_SCALE, 0, ScreenWidth() - (DISPLAY_SCALE * 64),
-               ScreenHeight(), olc::DARK_BLUE);
-
-      std::ostringstream debugStr;
-      debugStr << std::hex << std::setfill('0');
-
-      if (clockPaused) {
-        debugStr << "PAUSED ";
-      }
-
-      // Add CPU ticks
-      debugStr << std::setw(8) << ticks << " ticks\n\n";
-      // Add PC
-      debugStr << "PC: " << std::setw(4) << interp->pc << "    ";
-      // Add current opcode
-      debugStr << "OP: " << std::setw(4) << interp->opcode << "\n\n";
-      // Add register data
-      debugStr << "v0 v1 v2 v3 v4 v5 v6 v7\n";
-      debugStr << std::setw(2) << +interp->reg[0];
-      debugStr << " " << std::setw(2) << +interp->reg[1];
-      debugStr << " " << std::setw(2) << +interp->reg[2];
-      debugStr << " " << std::setw(2) << +interp->reg[3];
-      debugStr << " " << std::setw(2) << +interp->reg[4];
-      debugStr << " " << std::setw(2) << +interp->reg[5];
-      debugStr << " " << std::setw(2) << +interp->reg[6];
-      debugStr << " " << std::setw(2) << +interp->reg[7];
-      debugStr << "\n\nv8 v9 vA vB vC vD vE vF\n";
-      debugStr << std::setw(2) << +interp->reg[8];
-      debugStr << " " << std::setw(2) << +interp->reg[9];
-      debugStr << " " << std::setw(2) << +interp->reg[10];
-      debugStr << " " << std::setw(2) << +interp->reg[11];
-      debugStr << " " << std::setw(2) << +interp->reg[12];
-      debugStr << " " << std::setw(2) << +interp->reg[13];
-      debugStr << " " << std::setw(2) << +interp->reg[14];
-      debugStr << " " << std::setw(2) << +interp->reg[15] << "\n\n";
-      // Add index register
-      debugStr << "Index Register: " << std::setw(4) << interp->index << "\n\n";
-      // Add keypad state
-      debugStr << "1: " << interp->keypadState[0]
-               << " 2: " << interp->keypadState[1]
-               << " 3: " << interp->keypadState[2]
-               << " C: " << interp->keypadState[3]
-               << "\n4: " << interp->keypadState[4]
-               << " 5: " << interp->keypadState[5]
-               << " 6: " << interp->keypadState[6]
-               << " D: " << interp->keypadState[7]
-               << "\n7: " << interp->keypadState[8]
-               << " 8: " << interp->keypadState[9]
-               << " 9: " << interp->keypadState[10]
-               << " E: " << interp->keypadState[11]
-               << "\nA: " << interp->keypadState[12]
-               << " 0: " << interp->keypadState[13]
-               << " B: " << interp->keypadState[14]
-               << " F: " << interp->keypadState[15] << "\n\n";
-
-      debugStr << "Timers\n"
-               << "Delay: " << std::setw(2) << +interp->delayTimer
-               << "  Sound: " << std::setw(2) << +interp->soundTimer << "\n\n";
-
-      DrawString((64 * DISPLAY_SCALE) + 8, 8, debugStr.str());
-#endif
-
-      fAccumulatedTime -= (1.0f / CLOCK_SPEED);
-
-      if (!clockPaused || tickRequested) {
-        ticks++;
-
-        for (int i = 0; i < 16; i++) {
-          interp->keypadState[i] = GetKey(keypadLayout[i]).bHeld;
-        }
-
-        interp->Tick();
-
-        if (interp->redraw) {
-          interp->redraw = false;
-
-          for (int y = 0; y < 32; y++) {
-            for (int x = 0; x < 64; x++) {
-              FillRect(x * DISPLAY_SCALE, y * DISPLAY_SCALE, DISPLAY_SCALE,
-                       DISPLAY_SCALE,
-                       interp->display[(y * 64) + x] ? olc::WHITE : olc::BLACK);
-            }
-          }
-        }
-
-        if (interp->beep) {
-          interp->beep = false;
-          chip8::beep();
-        }
-      }
-    }
-
-    return true;
-  }
-};
+static void glfw_error_callback(int error, const char *description) {
+  std::cerr << "GLFW Error " << error << ": " << description << std::endl;
+}
 
 int main(int args, char **argv) {
-  if (args != 2) {
-    std::cerr << "No chip-8 program specified" << std::endl;
+  if (args < 2) {
+    std::cerr << "Usage:" << std::endl
+              << argv[0] << " path/to/chip8/program" << std::endl;
     return 1;
   }
 
-  // Seed the RNG
   srand((unsigned)time(NULL));
 
-  std::cerr << "Loading " << argv[1] << std::endl;
-
-  chip8::Chip8 chip8;
-  Display application(&chip8);
-
-  chip8.Reset();
-
-  if (!chip8.LoadProgram(argv[1])) {
-    std::cerr << "Unable to load " << argv[1] << std::endl
-              << "Aborting" << std::endl;
-
+  // Setup window
+  glfwSetErrorCallback(glfw_error_callback);
+  if (!glfwInit()) {
     return 1;
   }
 
-#ifdef _DEBUG
-  if (application.Construct(640, 208, 2, 2)) {
+  // Decide GL+GLSL versions
+#if defined(IMGUI_IMPL_OPENGL_ES2)
+  const char *glsl_version = "#version 100";
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+  glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_ES_API);
+#elif defined(__APPLE__)
+  const char *glsl_version = "#version 150";
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
+  glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE); // 3.2+ only
+  glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);           // Required on Mac
 #else
-  if (application.Construct(384, 208, 2, 2)) {
+  const char *glsl_version = "#version 130";
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
 #endif
-    application.Start();
+
+  // Create window with graphics context
+  GLFWwindow *window = glfwCreateWindow(1280, 720, "Chip8", NULL, NULL);
+  if (window == NULL) {
+    return 1;
   }
+
+  glfwMakeContextCurrent(window);
+  glfwSwapInterval(1); // Enable vsync
+
+  IMGUI_CHECKVERSION();
+  ImGui::CreateContext();
+  ImGuiIO &io = ImGui::GetIO();
+  (void)io;
+
+  io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+  io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+  io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+
+  GLubyte displayPixels[64 * 32 * DISPLAY_SCALE * DISPLAY_SCALE * 3];
+  int pixelIndex = 0;
+
+  for (int x = 0; x < 2048 * DISPLAY_SCALE * DISPLAY_SCALE; x++) {
+    displayPixels[pixelIndex++] = 255;
+    displayPixels[pixelIndex++] = 0;
+    displayPixels[pixelIndex++] = 0;
+  }
+
+  GLuint displayTexture;
+  glGenTextures(1, &displayTexture);
+  glBindTexture(GL_TEXTURE_2D, displayTexture);
+
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 64 * DISPLAY_SCALE, 32 * DISPLAY_SCALE,
+               0, GL_RGB, GL_UNSIGNED_BYTE, displayPixels);
+
+  // Setup Dear ImGui style
+  ImGui::StyleColorsDark();
+
+  auto &style = ImGui::GetStyle();
+  style.FrameRounding = 2;
+  // style.FramePadding = ImVec2(2, 1);
+  style.WindowRounding = 4;
+  style.WindowPadding = ImVec2(16, 12);
+  style.Colors[ImGuiCol_WindowBg] =
+      ImVec4(0.094f, 0.094f, 0.101f, 1); // ~#18181A
+
+  ImFont *font = io.Fonts->AddFontFromMemoryCompressedTTF(
+      jetbrains_mono_compressed_data, jetbrains_mono_compressed_size, 18);
+  io.Fonts->Build();
+  ImGui::SetCurrentFont(font);
+
+  // Setup Platform/Renderer backends
+  ImGui_ImplGlfw_InitForOpenGL(window, true);
+  ImGui_ImplOpenGL3_Init(glsl_version);
+
+  // Our state
+  auto clear_color = ImVec4(0.024f, 0.024f, 0.03f, 1.00f);
+
+  chip8::Chip8 interp;
+  interp.Reset();
+
+  if (!interp.LoadProgram(argv[1])) {
+    std::cerr << "Unable to load " << argv[1] << std::endl;
+    return -1;
+  }
+
+  chip8::GUI gui(&interp, displayTexture, displayPixels);
+
+  while (!glfwWindowShouldClose(window)) {
+    glfwPollEvents();
+
+    ImGui_ImplOpenGL3_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
+
+    gui.Render();
+
+    // Rendering
+    ImGui::Render();
+
+    int display_w, display_h;
+    glfwGetFramebufferSize(window, &display_w, &display_h);
+    glViewport(0, 0, display_w, display_h);
+    glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w,
+                 clear_color.z * clear_color.w, clear_color.w);
+    glClear(GL_COLOR_BUFFER_BIT);
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+    // Update and Render additional Platform Windows
+    if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
+      GLFWwindow *backup_current_context = glfwGetCurrentContext();
+      ImGui::UpdatePlatformWindows();
+      ImGui::RenderPlatformWindowsDefault();
+      glfwMakeContextCurrent(backup_current_context);
+    }
+
+    glfwSwapBuffers(window);
+  }
+
+  // Cleanup
+  ImGui_ImplOpenGL3_Shutdown();
+  ImGui_ImplGlfw_Shutdown();
+  ImGui::DestroyContext();
+
+  glfwDestroyWindow(window);
+  glfwTerminate();
 
   return 0;
 }

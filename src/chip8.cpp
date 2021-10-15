@@ -83,7 +83,7 @@ void Chip8::Tick() {
   switch (opcode & 0xF000) {
   case 0x0000: {
     switch (opcode) {
-    // Clear Screen
+    // 0x00E0 (Clear Screen)
     case 0x00E0: {
       for (int i = 0; i < 2048; i++) {
         display[i] = false;
@@ -95,16 +95,17 @@ void Chip8::Tick() {
       break;
     }
 
-    // Return from subroutine
+    // 0x00EE (Return from subroutine)
     case 0x00EE: {
       pc = stackPop();
       pc += 2;
       break;
     }
 
-    // Call
+    // 0x0NNN (Call native code, not implemented)
     default: {
       invalid = true;
+      pc += 2;
       break;
     }
     }
@@ -254,6 +255,7 @@ void Chip8::Tick() {
 
     default: {
       invalid = true;
+      pc += 2;
       break;
     }
     }
@@ -342,6 +344,7 @@ void Chip8::Tick() {
 
     default: {
       invalid = true;
+      pc += 2;
       break;
     }
     }
@@ -450,6 +453,7 @@ void Chip8::Tick() {
 
     default: {
       invalid = true;
+      pc += 2;
       break;
     }
     }
@@ -459,6 +463,7 @@ void Chip8::Tick() {
 
   default:
     invalid = true;
+    pc += 2;
     break;
   }
 

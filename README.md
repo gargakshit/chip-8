@@ -1,9 +1,9 @@
 # Chip-8 interpreter in C++
 
 Yet another [Chip-8](https://en.wikipedia.org/wiki/Chip-8) interpreter, this
-time written in C++ using
-[PixelGameEngine](https://github.com/OneLoneCoder/olcPixelGameEngine) as its
-graphics library.
+time written in C++ using [GLFW](https://github.com/glfw/glfw) and OpenGL as its
+graphics library. It uses [Dear ImGui](https://github.com/ocornut/imgui) to
+draw the GUI.
 
 ### Why C++?
 
@@ -12,18 +12,18 @@ C++98 2 years ago for school.
 
 ### Screenies
 
-![Screenshot of the debug interface](./screenshots/debug.png)
+![Screenshot of the interface](./screenshots/s1.png)
 
-_Debug interface_
+_CPU Interface_
 
 https://user-images.githubusercontent.com/15605299/137184651-490fa5b9-62a3-4274-b273-5b67c461552a.mp4
 
-_Screen recording of the snake game in release mode_
+_Screen recording of the snake game_
 
 ### Building
 
-In theory, it should run anywhere where PixelGameEngine and C++ runs. But I only
-tested it on Windows
+In theory, it should run anywhere where Dear ImGui and C++ runs and OpenGL is
+available. But I only tested it on Windows.
 
 #### Windows
 
@@ -31,7 +31,7 @@ You will need `cmake`, `llvm`, `make` and `git`.
 
 - ```$ git clone https://github.com/gargakshit/chip-8 --recursive```
 
-  Use `--recursive` as the repo contains PixelGameEngine as a submodule
+  Use `--recursive` as the repo contains GLFW and Dear ImGui as submodules
 
 - ```$ cmake -Bbuild -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER="clang++" -G "MinGW Makefiles" .```
 
