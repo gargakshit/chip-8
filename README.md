@@ -16,9 +16,9 @@ C++98 2 years ago for school.
 
 _CPU Interface_
 
-https://user-images.githubusercontent.com/15605299/137184651-490fa5b9-62a3-4274-b273-5b67c461552a.mp4
+https://user-images.githubusercontent.com/15605299/137485154-4aefa57f-bbb2-440e-b5be-78fd15abe903.mp4
 
-_Screen recording of the snake game_
+_Screen recording of the snake game running with the chip-8 interpreter_
 
 ### Building
 
@@ -36,9 +36,8 @@ You will need `cmake`, `llvm`, `make` and `git`.
 - ```$ cmake -Bbuild -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER="clang++" -G "MinGW Makefiles" .```
 
   This will produce `MinGW Makefiles` with `clang++` as the `C++` compiler.
-  You can add the flag `-DCMAKE_BUILD_TYPE=Release` to generate
-  `MinGW Makefiles` for the release build. The release build is optimized and
-  the debug interface is removed.
+  You can optionally add the flag `-DCMAKE_BUILD_TYPE=Release` to generate
+  `MinGW Makefiles` for the release build. The release build is optimized.
 
 - ```$ cmake --build build```
 
