@@ -467,6 +467,12 @@ void Chip8::Tick() {
     break;
   }
 
+  if (invalid) {
+    std::cerr << "Invalid opcode: " << opcode << std::endl;
+  }
+}
+
+void Chip8::TickTimer() {
   // Update timers
   if (delayTimer > 0) {
     delayTimer--;
@@ -477,10 +483,6 @@ void Chip8::Tick() {
       beep = true;
     }
     soundTimer--;
-  }
-
-  if (invalid) {
-    std::cerr << "Invalid opcode: " << opcode << std::endl;
   }
 }
 } // namespace chip8

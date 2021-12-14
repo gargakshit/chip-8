@@ -1,9 +1,15 @@
+#include <chrono>
+
 #include <GLFW/glfw3.h>
 #include <imgui.h>
 
 #include "chip8.hpp"
 
 #define DISPLAY_SCALE 12
+
+using high_resolution_time_point = std::chrono::time_point<
+    std::chrono::steady_clock,
+    std::chrono::duration<long long, std::ratio<1, 1000000000>>>;
 
 namespace chip8 {
 #pragma once
@@ -28,9 +34,11 @@ class GUI {
   int ticks = 0;
   bool tickRequested = false;
 
-  int clock = 960;
-  int prevClock = clock;
+  int clockSpeed = 960;
+  int prevClockSpeed = clockSpeed;
   Chip8 *interp;
+
+  high_resolution_time_point lastTimer;
 
   GLuint displayTexture;
   GLubyte *displayPixels;

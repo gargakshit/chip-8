@@ -1,15 +1,20 @@
-#include <GLFW/glfw3.h>
+#include <chrono>
 #include <cstdint>
+
+#include <GLFW/glfw3.h>
 #include <imgui.h>
 
 #include "beep.hpp"
 #include "gui.hpp"
+
+using std::chrono::high_resolution_clock;
 
 namespace chip8 {
 GUI::GUI(Chip8 *c8, GLuint texture, GLubyte *pixels) {
   interp = c8;
   displayTexture = texture;
   displayPixels = pixels;
+  lastTimer = high_resolution_clock::now();
 }
 
 inline void GUI::Tick() {
@@ -40,8 +45,14 @@ inline void GUI::RenderDisplay(float framerate) {
 
   // Tick the clock frequency divided by framerate. Not the best way, but heh
   // it works while consuming sane amounts of CPU and GPU
-  for (int i = 0; i < (clock / framerate); i++) {
+  for (int i = 0; i < (clockSpeed / framerate); i++) {
     Tick();
+  }
+
+  auto currentTime = high_resolution_clock::now();
+  if ((currentTime - lastTimer).count() >= 16666666) {
+    interp->TickTimer();
+    lastTimer = currentTime;
   }
 
   if (interp->beep) {
@@ -111,7 +122,7 @@ inline void GUI::RenderGeneral(float framerate) {
 
   ImGui::TextColored(labelColor, "Clock:");
   ImGui::SameLine();
-  ImGui::InputInt("Hz", &clock);
+  ImGui::InputInt("Hz", &clockSpeed);
 
   ImGui::ColorEdit3("FG Color", (float *)&fgColor);
   ImGui::ColorEdit3("BG Color", (float *)&bgColor);
@@ -164,15 +175,15 @@ inline void GUI::RenderDebug() {
   ImGui::Begin("Debug", NULL, ImGuiWindowFlags_AlwaysAutoResize);
 
   ImGui::TextColored(labelColor, "Status");
-  ImGui::Text(clock == 0 ? "Paused" : "Running");
+  ImGui::Text(clockSpeed == 0 ? "Paused" : "Running");
 
   ImGui::TextColored(labelColor, "Clock");
-  if (ImGui::Button(clock == 0 ? "Resume" : "Pause")) {
-    if (clock == 0) {
-      clock = prevClock;
+  if (ImGui::Button(clockSpeed == 0 ? "Resume" : "Pause")) {
+    if (clockSpeed == 0) {
+      clockSpeed = prevClockSpeed;
     } else {
-      prevClock = clock;
-      clock = 0;
+      prevClockSpeed = clockSpeed;
+      clockSpeed = 0;
     }
   }
 

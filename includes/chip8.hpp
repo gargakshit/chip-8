@@ -53,5 +53,6 @@ public:
   void Reset();
   bool LoadProgram(const std::string &filename);
   void Tick();
+  void TickTimer();
 };
 } // namespace chip8

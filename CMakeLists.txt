@@ -27,6 +27,9 @@ include_directories(${SUBMODULE_DIR}/glfw/include)
 include_directories(${SUBMODULE_DIR}/imgui)
 include_directories(${SUBMODULE_DIR}/imgui/backends)
 
+# Remove OpenGL deprecation warning
+add_compile_definitions(GL_SILENCE_DEPRECATION)
+
 find_package(OpenGL REQUIRED)
 
 # Puts all .cpp files inside src
