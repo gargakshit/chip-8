@@ -2,6 +2,7 @@
 
 #include <GLFW/glfw3.h>
 #include <imgui.h>
+#include <imgui_memory_editor/imgui_memory_editor.h>
 
 #include "chip8.hpp"
 
@@ -30,6 +31,8 @@ class GUI {
   ImVec4 bgColor = ImVec4(0.047f, 0.047f, 0.047f, 1.0f);
   ImVec4 labelColor = ImVec4(1.0f, 0.3f, 0.3f, 1.0f);
   ImVec4 successColor = ImVec4(0.0f, 1.0f, 0.0f, 1.0f);
+
+  MemoryEditor memoryEditor;
 
   int ticks = 0;
   bool tickRequested = false;

@@ -26,6 +26,7 @@ include_directories(${SUBMODULE_DIR}/olcPixelGameEngine)
 include_directories(${SUBMODULE_DIR}/glfw/include)
 include_directories(${SUBMODULE_DIR}/imgui)
 include_directories(${SUBMODULE_DIR}/imgui/backends)
+include_directories(${SUBMODULE_DIR}/imgui_club)
 
 # Remove OpenGL deprecation warning
 add_compile_definitions(GL_SILENCE_DEPRECATION)

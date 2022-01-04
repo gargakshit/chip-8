@@ -3,6 +3,7 @@
 
 #include <GLFW/glfw3.h>
 #include <imgui.h>
+#include <iterator>
 
 #include "beep.hpp"
 #include "gui.hpp"
@@ -15,6 +16,7 @@ GUI::GUI(Chip8 *c8, GLuint texture, GLubyte *pixels) {
   displayTexture = texture;
   displayPixels = pixels;
   lastTimer = high_resolution_clock::now();
+  memoryEditor.Cols = 8;
 }
 
 inline void GUI::Tick() {
@@ -195,24 +197,7 @@ inline void GUI::RenderDebug() {
 }
 
 inline void GUI::RenderMemory() {
-  ImGui::Begin("Memory", NULL, ImGuiWindowFlags_AlwaysAutoResize);
-
-  uint16_t address = 0;
-  while (address < 4096) {
-    ImGui::TextColored(labelColor, "%04X", address);
-    ImGui::SameLine();
-
-    for (int i = 0; i < 8; i++) {
-      ImGui::Text("%02X", interp->mem[address + i]);
-      ImGui::SameLine();
-    }
-
-    ImGui::NewLine();
-
-    address += 8;
-  }
-
-  ImGui::End();
+  memoryEditor.DrawWindow("Memory Editor", std::data(interp->mem), 4096);
 }
 
 inline void GUI::RenderKeypadState() {
