@@ -3,7 +3,6 @@
 
 #include <GLFW/glfw3.h>
 #include <imgui.h>
-#include <iterator>
 
 #include "beep.hpp"
 #include "gui.hpp"
@@ -65,42 +64,32 @@ inline void GUI::RenderDisplay(float framerate) {
   if (interp->redraw) {
     interp->redraw = false;
 
-    int fg[3] = {
-        static_cast<int>(fgColor.x * 255),
-        static_cast<int>(fgColor.y * 255),
-        static_cast<int>(fgColor.z * 255),
+    GLubyte fg[3] = {
+        static_cast<GLubyte>(fgColor.x * 255),
+        static_cast<GLubyte>(fgColor.y * 255),
+        static_cast<GLubyte>(fgColor.z * 255),
     };
-    int bg[3] = {
-        static_cast<int>(bgColor.x * 255),
-        static_cast<int>(bgColor.y * 255),
-        static_cast<int>(bgColor.z * 255),
+    GLubyte bg[3] = {
+        static_cast<GLubyte>(bgColor.x * 255),
+        static_cast<GLubyte>(bgColor.y * 255),
+        static_cast<GLubyte>(bgColor.z * 255),
     };
 
-    // Draw scaled display
-    for (int y = 0; y < 32; y++) {
-      for (int x = 0; x < 64; x++) {
-        int *subpixel = interp->display[(y * 64) + x] ? fg : bg;
+    // Draw the display. Scaling is handled by opengl's nearest neighbour
+    for (int i = 0; i < 64 * 32; i++) {
+      auto subpixel = interp->display[i] ? fg : bg;
 
-        for (int xScale = 0; xScale < DISPLAY_SCALE; xScale++) {
-          for (int yScale = 0; yScale < DISPLAY_SCALE; yScale++) {
-            int i = ((((y * DISPLAY_SCALE * 64) * DISPLAY_SCALE) +
-                      (x * DISPLAY_SCALE) + xScale) +
-                     (yScale * DISPLAY_SCALE * 64)) *
-                    3;
-
-            displayPixels[i] = subpixel[0];
-            displayPixels[i + 1] = subpixel[1];
-            displayPixels[i + 2] = subpixel[2];
-          }
-        }
+      for (int j = 0; j < 3; j++) {
+        displayPixels[i * 3 + j] = subpixel[j];
       }
     }
-  }
 
-  // Render it onto the opengl texture
-  glBindTexture(GL_TEXTURE_2D, displayTexture);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 64 * DISPLAY_SCALE, 32 * DISPLAY_SCALE,
-               0, GL_RGB, GL_UNSIGNED_BYTE, displayPixels);
+    // Render it onto the opengl texture
+    glBindTexture(GL_TEXTURE_2D, displayTexture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 64, 32, 0, GL_RGB, GL_UNSIGNED_BYTE,
+                 displayPixels);
+    glBindTexture(GL_TEXTURE_2D, 0);
+  }
 
   ImGui::Image((void *)(intptr_t)displayTexture,
                ImVec2(64 * DISPLAY_SCALE, 32 * DISPLAY_SCALE));

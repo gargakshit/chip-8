@@ -76,25 +76,24 @@ int main(int args, char **argv) {
   io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
   io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 
-  GLubyte displayPixels[64 * 32 * DISPLAY_SCALE * DISPLAY_SCALE * 3];
-  int pixelIndex = 0;
+  GLubyte displayPixels[64 * 32 * 3];
 
-  for (int x = 0; x < 2048 * DISPLAY_SCALE * DISPLAY_SCALE; x++) {
-    displayPixels[pixelIndex++] = 255;
-    displayPixels[pixelIndex++] = 0;
-    displayPixels[pixelIndex++] = 0;
+  for (int x = 0; x < 2048; x++) {
+    displayPixels[x * 3] = 255;
+    displayPixels[x * 3 + 1] = 255;
+    displayPixels[x * 3 + 2] = 255;
   }
 
   GLuint displayTexture;
   glGenTextures(1, &displayTexture);
   glBindTexture(GL_TEXTURE_2D, displayTexture);
 
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 64 * DISPLAY_SCALE, 32 * DISPLAY_SCALE,
-               0, GL_RGB, GL_UNSIGNED_BYTE, displayPixels);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 64, 32, 0, GL_RGB, GL_UNSIGNED_BYTE,
+               displayPixels);
 
   // Setup Dear ImGui style
   ImGui::StyleColorsDark();
