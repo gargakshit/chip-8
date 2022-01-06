@@ -186,7 +186,9 @@ inline void GUI::RenderDebug() {
 }
 
 inline void GUI::RenderMemory() {
-  memoryEditor.DrawWindow("Memory Editor", std::data(interp->mem), 4096);
+  ImGui::Begin("Memory Editor", NULL, ImGuiWindowFlags_AlwaysAutoResize);
+  memoryEditor.DrawContents(std::data(interp->mem), 4096);
+  ImGui::End();
 }
 
 inline void GUI::RenderKeypadState() {
@@ -231,7 +233,7 @@ inline void GUI::RenderKeypadState() {
   ImGui::End();
 }
 
-void GUI::RenderStack() {
+inline void GUI::RenderStack() {
   ImGui::Begin("Stack", NULL, ImGuiWindowFlags_AlwaysAutoResize);
 
   for (int i = 0; i < 16; i++) {

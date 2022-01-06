@@ -10,3 +10,7 @@ out/
 .idea
 
 imgui.ini
+
+# Macos
+
+**/*.DS_Store
